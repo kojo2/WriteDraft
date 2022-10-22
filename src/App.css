@@ -13,7 +13,7 @@
   }
 }
 
-.App-header {
+.App-container {
   background-color: #282c34;
   min-height: 100vh;
   display: flex;
@@ -35,4 +35,63 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.deck {
+  position: static;
+  height: 100vh;
+  width: 100vw;
+  /* background-color: gray; */
+  padding: 10px;
+}
+
+.buttons {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: flex-end;
+}
+.rearrange-button {
+  width: 50px;
+  height: 70px;
+  background-color: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+}
+
+.camera {
+  position: absolute;
+  /* display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  column-gap: 10px;
+  row-gap: 10px; */
+  /* background-color: red; */
+  pointer-events: none;
+  height: 100%;
+  width: 100%;
+}
+
+.card {
+  background-color: white;
+  position: absolute;
+  min-height: 200px;
+  min-width: 300px;
+  color: black;
+  display: flex;
+  flex-direction: column;
+  pointer-events: all;
+  justify-content: center;
+}
+
+.selected {
+  border: solid 2px #00b5f0;
+  box-sizing: border-box;
+  box-shadow: 0px 0px 30px #00b5f0;
+}
+
+.no-highlight {
+  user-select: none;
 }
