@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { chunk, clone, flatten, get, capitalize } from 'lodash'
+import _, { chunk, clone, flatten, get, capitalize } from 'lodash'
 import Card from './Card'
 import { useDispatch, useSelector } from 'react-redux'
 import useRedux from '../redux/useRedux'
@@ -19,16 +19,16 @@ const Deck = () => {
   const [currentlySelectedIndex, setCurrentlySelectedIndex] = useState(-1)
 
   const getLevelCards = (_cards) => {
-    let c
     if (route) {
-      let r = route.split('-')
-      let s = r
-        .filter((x) => x)
-        .map((x) => `[${x}]`)
-        .join('.children')
-      c = get(_cards, s).children
+      let r = route.split('-').filter((x) => x)
+      let p = { c: _cards }
+      r.forEach((index) => {
+        let i = parseInt(index)
+        p = { c: p.c.find((x) => x.index === i)?.children || [] }
+      })
+      return p.c
     }
-    return route ? (c ? c : _cards) : _cards
+    return _cards
   }
 
   const sortCards = () => {
@@ -47,9 +47,10 @@ const Deck = () => {
       })
     })
     levelCards = flatten([...rows])
-    levelCards.forEach((card) => {
+    levelCards.forEach((card, i) => {
       card.x = col * 350 + left
       card.y = row * 250 + top
+      card.index = i
       col++
       if (col > 3) {
         row++
@@ -83,7 +84,13 @@ const Deck = () => {
     if (!v.length) return
     let _cards = [...cards]
     let _levelCards = getLevelCards(_cards)
-    _levelCards.push({ text: v, x: 100, y: 100, children: [] })
+    _levelCards.push({
+      text: v,
+      x: 20,
+      y: 50,
+      children: [],
+      index: _levelCards.length,
+    })
     setCurrentlySelectedIndex(_levelCards.length - 1)
     dispatch(updateCards(_cards))
   }
@@ -140,6 +147,20 @@ const Deck = () => {
           if (currentlySelectedIndex < levelCards.length - 1) {
             setCurrentlySelectedIndex(currentlySelectedIndex + 1)
           }
+        } else if (e.key === 'e') {
+          document.write('<pre>' + JSON.stringify(cards, null, 2) + '</pre>')
+        } else if (e.key === 'l') {
+          let p = window.prompt('Load cards')
+          if (!p.length) {
+            return
+          } else {
+            try {
+              let o = JSON.parse(p)
+              dispatch(updateCards(o))
+            } catch (err) {
+              alert("Couldn't load this file: " + err)
+            }
+          }
         }
       }}
       onMouseMove={(e) => {
@@ -147,8 +168,9 @@ const Deck = () => {
         if (currentMovingIndex > -1) {
           let _cards = clone(cards)
           let levelCards = getLevelCards(_cards)
-          levelCards[currentMovingIndex].x = e.clientX - 150 - camPos.x
-          levelCards[currentMovingIndex].y = e.clientY - 100 - camPos.y
+          let lc = levelCards.find((x) => x.index === currentMovingIndex)
+          lc.x = e.clientX - 150 - camPos.x
+          lc.y = e.clientY - 100 - camPos.y
           dispatch(updateCards(_cards))
         } else if (movingCam) {
           let _camPos = { ...camPos }
@@ -169,21 +191,24 @@ const Deck = () => {
       <div className="title-bar">{route ? get(cards, route)?.text : ''}</div>
       <div className="camera-container">
         <div className="camera" style={{ top: camPos.y, left: camPos.x }}>
-          {levelCards.map((card, i) => (
+          {levelCards.map((card) => (
             <Card
               words={card.words ? card.words : averageWordCount}
               setWordCount={(wordcount) => {
                 let _cards = [...cards]
-                _cards[i].words = wordcount
+                let _levelCards = getLevelCards(_cards)
+                _levelCards.find(
+                  (x) => x.index === card.index,
+                ).words = wordcount
                 dispatch(updateCards(_cards))
               }}
-              selected={currentlySelectedIndex === i}
+              selected={currentlySelectedIndex === card.index}
               pos={{ x: card.x, y: card.y }}
               text={card.text}
               onMouseDown={(e) => {
                 e.stopPropagation()
-                setCurrentlySelectedIndex(i)
-                setCurrentMovingIndex(i)
+                setCurrentlySelectedIndex(card.index)
+                setCurrentMovingIndex(card.index)
               }}
               onMouseUp={(e) => {
                 setCurrentMovingIndex(-1)
