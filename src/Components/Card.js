@@ -1,4 +1,15 @@
-const Card = ({ pos, text, onMouseDown, onMouseMove, onMouseUp, selected }) => {
+import { useState } from 'react'
+
+const Card = ({
+  pos,
+  text,
+  onMouseDown,
+  onMouseMove,
+  onMouseUp,
+  selected,
+  words,
+  setWordCount,
+}) => {
   return (
     <div
       className={`card ${selected ? 'selected' : ''}`}
@@ -7,6 +18,15 @@ const Card = ({ pos, text, onMouseDown, onMouseMove, onMouseUp, selected }) => {
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
     >
+      <span
+        className="word-count"
+        onClick={() => {
+          let c = window.prompt('New word count for this card')
+          setWordCount(c)
+        }}
+      >
+        Word count: {words}
+      </span>
       <span className="no-highlight">{text}</span>
     </div>
   )

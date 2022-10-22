@@ -36,6 +36,25 @@ const Deck = () => {
     setCards(_cards)
   }
 
+  const calculateAverageWordCount = () => {
+    let totalWordCount = 100000
+    // add up all the cards that have word counts already
+    let usedWords = 0
+    let unwordcountedcardscount = 0
+    cards.forEach((card) => {
+      if (card.words) {
+        usedWords += parseInt(card.words)
+      } else {
+        unwordcountedcardscount++
+      }
+    })
+
+    // divide the remainder by the remainder of cards that dont have words counts
+    return Math.round((totalWordCount - usedWords) / unwordcountedcardscount)
+  }
+
+  const averageWordCount = calculateAverageWordCount()
+
   return (
     <div
       className="deck"
@@ -107,9 +126,15 @@ const Deck = () => {
       <div className="camera" style={{ top: camPos.y, left: camPos.x }}>
         {cards.map((card, i) => (
           <Card
+            words={card.words ? card.words : averageWordCount}
+            setWordCount={(wordcount) => {
+              let _cards = [...cards]
+              _cards[i].words = wordcount
+              setCards(_cards)
+            }}
             selected={currentlySelectedIndex === i}
             pos={{ x: card.x, y: card.y }}
-            text={`${card.text} (${i})`}
+            text={card.text}
             onMouseDown={(e) => {
               e.stopPropagation()
               setCurrentlySelectedIndex(i)
