@@ -103,9 +103,11 @@
 }
 
 .word-count {
+  padding: 10px;
+  cursor: pointer;
   position: absolute;
-  top: 10px;
-  left: 10px;
+  top: 0px;
+  left: 0px;
   font-size: 12px;
 }
 

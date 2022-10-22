@@ -9,6 +9,7 @@ const Card = ({
   selected,
   words,
   setWordCount,
+  removeWordCount,
 }) => {
   return (
     <div
@@ -20,10 +21,25 @@ const Card = ({
     >
       <span
         className="word-count"
-        onClick={() => {
+        onClick={(e) => {
+          e.stopPropagation()
+          e.preventDefault()
           let c = window.prompt('New word count for this card')
           if (!c.length) return
           setWordCount(c)
+        }}
+        onContextMenu={(e) => {
+          if (words) {
+            return
+          }
+          e.preventDefault()
+          e.stopPropagation()
+          let c = window.confirm(
+            'Do you want to remove the explicit word count for this card and go back to auto?',
+          )
+          if (c) {
+            removeWordCount()
+          }
         }}
       >
         {words} words

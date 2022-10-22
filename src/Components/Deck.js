@@ -18,9 +18,9 @@ const Deck = () => {
   const [currentMovingIndex, setCurrentMovingIndex] = useState(-1)
   const [currentlySelectedIndex, setCurrentlySelectedIndex] = useState(-1)
 
-  const getLevelCards = (_cards) => {
-    if (route) {
-      let r = route.split('-').filter((x) => x)
+  const getLevelCards = (_cards, f = route) => {
+    if (f) {
+      let r = f.split('-').filter((x) => x)
       let p = { c: _cards }
       r.forEach((index) => {
         let i = parseInt(index)
@@ -62,7 +62,7 @@ const Deck = () => {
   }
 
   const calculateAverageWordCount = () => {
-    let totalWordCount = 100000
+    let totalWordCount = route ? parseInt(route.split('_').pop()) : 100000
     // add up all the cards that have word counts already
     let usedWords = 0
     let unwordcountedcardscount = 0
@@ -76,7 +76,9 @@ const Deck = () => {
     })
 
     // divide the remainder by the remainder of cards that dont have words counts
-    return Math.round((totalWordCount - usedWords) / unwordcountedcardscount)
+    let wc = Math.round((totalWordCount - usedWords) / unwordcountedcardscount)
+
+    return wc
   }
 
   const createCard = () => {
@@ -124,7 +126,11 @@ const Deck = () => {
             let c = window.confirm('Do you want to delete the selected card?')
             if (c) {
               let _cards = [...cards]
-              _cards.splice(currentlySelectedIndex, 1)
+              let levelCards = getLevelCards(_cards)
+              let index = levelCards.findIndex(
+                (x) => x.index === currentlySelectedIndex,
+              )
+              levelCards.splice(index, 1)
               dispatch(updateCards(_cards))
             }
           }
@@ -132,7 +138,16 @@ const Deck = () => {
           sortCards()
         } else if (e.key === ' ') {
           if (currentlySelectedIndex > -1) {
-            navigate('/' + (route ? route : '') + '-' + currentlySelectedIndex)
+            let lc = levelCards.find((x) => x.index === currentlySelectedIndex)
+            let wordcount = lc.words ? lc.words : averageWordCount
+            navigate(
+              '/' +
+                (route ? route : '') +
+                '-' +
+                currentlySelectedIndex +
+                '_' +
+                wordcount,
+            )
           }
         } else if (e.key === 'b') {
           let r = route.split('-')
@@ -148,7 +163,10 @@ const Deck = () => {
             setCurrentlySelectedIndex(currentlySelectedIndex + 1)
           }
         } else if (e.key === 'e') {
-          document.write('<pre>' + JSON.stringify(cards, null, 2) + '</pre>')
+          let c = window.confirm('Do you want to export this to a text file')
+          if (c) {
+            document.write('<pre>' + JSON.stringify(cards, null, 2) + '</pre>')
+          }
         } else if (e.key === 'l') {
           let p = window.prompt('Load cards')
           if (!p.length) {
@@ -161,6 +179,9 @@ const Deck = () => {
               alert("Couldn't load this file: " + err)
             }
           }
+        } else if (e.key === 'Escape') {
+          setCurrentlySelectedIndex(-1)
+          setCurrentMovingIndex(-1)
         }
       }}
       onMouseMove={(e) => {
@@ -188,12 +209,29 @@ const Deck = () => {
           }}
         ></div>
       </div>
-      <div className="title-bar">{route ? get(cards, route)?.text : ''}</div>
+      <div className="title-bar">
+        {route
+          ? (() => {
+              let r = route.split('-')
+              let i = r.pop()
+              let lc = getLevelCards(cards, r.join('-'))
+              return lc.find((x) => x.index === parseInt(i.split('_')[0]))?.text
+            })()
+          : ''}
+      </div>
       <div className="camera-container">
         <div className="camera" style={{ top: camPos.y, left: camPos.x }}>
           {levelCards.map((card) => (
             <Card
               words={card.words ? card.words : averageWordCount}
+              removeWordCount={() => {
+                let _cards = [...cards]
+                let _levelCards = getLevelCards(_cards)
+                delete _levelCards.find((x) => x.index === card.index).words
+                dispatch(updateCards(_cards))
+                setCurrentMovingIndex(-1)
+                setCurrentlySelectedIndex(-1)
+              }}
               setWordCount={(wordcount) => {
                 let _cards = [...cards]
                 let _levelCards = getLevelCards(_cards)
