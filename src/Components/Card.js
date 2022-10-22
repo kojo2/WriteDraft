@@ -25,7 +25,7 @@ const Card = ({
           setWordCount(c)
         }}
       >
-        Word count: {words}
+        {words} words
       </span>
       <span className="no-highlight">{text}</span>
     </div>

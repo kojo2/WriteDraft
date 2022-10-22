@@ -1,11 +1,16 @@
 import { useState } from 'react'
-import { chunk, flatten } from 'lodash'
+import { chunk, clone, flatten } from 'lodash'
 import Card from './Card'
+import { useDispatch, useSelector } from 'react-redux'
+import useRedux from '../redux/useRedux'
+import { updateCards } from '../redux/mainActions'
 
 const Deck = () => {
   const [camPos, setCamPos] = useState({ x: 0, y: 0 })
   const [movingCam, setMovingCam] = useState(false)
-  const [cards, setCards] = useState([])
+  const dispatch = useDispatch()
+  // const [cards, setCards] = useState([])
+  const { cards } = useRedux()
   const [currentMovingIndex, setCurrentMovingIndex] = useState(-1)
   const [currentlySelectedIndex, setCurrentlySelectedIndex] = useState(-1)
 
@@ -33,7 +38,7 @@ const Deck = () => {
         col = 0
       }
     })
-    setCards(_cards)
+    dispatch(updateCards(_cards))
   }
 
   const calculateAverageWordCount = () => {
@@ -72,28 +77,17 @@ const Deck = () => {
         setCurrentMovingIndex(-1)
         setMovingCam(true)
       }}
-      // onMouseUp={() => {
-      //   setMovingCam(false)
-      // }}
-      // onMouseMove={(e) => {
-      //   if (movingCam) {
-      //     let _camPos = { ...camPos }
-      //     _camPos.x += e.movementX
-      //     _camPos.y += e.movementY
-      //     setCamPos(_camPos)
-      //   }
-      // }}
       onKeyDown={(e) => {
         if (e.key === 'n' || e.key === 'Enter') {
           let v = prompt('Text')
-          setCards([...cards, { text: v, x: 100, y: 100, moving: false }])
+          dispatch(updateCards([...cards, { text: v, x: 100, y: 100 }]))
         } else if (e.key === 'Backspace') {
           if (currentlySelectedIndex > -1) {
             let c = window.confirm('Do you want to delete the selected card?')
             if (c) {
               let _cards = [...cards]
               _cards.splice(currentlySelectedIndex, 1)
-              setCards(_cards)
+              dispatch(updateCards(_cards))
             }
           }
         } else if (e.key === 's') {
@@ -103,10 +97,11 @@ const Deck = () => {
       onMouseMove={(e) => {
         e.stopPropagation()
         if (currentMovingIndex > -1) {
-          let _cards = [...cards]
+          let _cards = clone(cards)
+
           _cards[currentMovingIndex].x = e.clientX - 150 - camPos.x
           _cards[currentMovingIndex].y = e.clientY - 100 - camPos.y
-          setCards([..._cards])
+          dispatch(updateCards(_cards))
         } else if (movingCam) {
           let _camPos = { ...camPos }
           _camPos.x += e.movementX
@@ -130,7 +125,7 @@ const Deck = () => {
             setWordCount={(wordcount) => {
               let _cards = [...cards]
               _cards[i].words = wordcount
-              setCards(_cards)
+              dispatch(updateCards(_cards))
             }}
             selected={currentlySelectedIndex === i}
             pos={{ x: card.x, y: card.y }}
