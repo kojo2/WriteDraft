@@ -22,6 +22,7 @@ const Card = ({
         className="word-count"
         onClick={() => {
           let c = window.prompt('New word count for this card')
+          if (!c.length) return
           setWordCount(c)
         }}
       >
