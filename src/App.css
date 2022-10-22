@@ -54,11 +54,26 @@
   display: flex;
   justify-content: flex-end;
 }
+.title-bar {
+  display: flex;
+  justify-content: flex-start;
+  height: 80px;
+  margin-left: 20px;
+  color: #0090fb;
+  z-index: 1000;
+  position: absolute;
+  align-items: center;
+}
 .rearrange-button {
   width: 50px;
   height: 70px;
   background-color: rgba(255, 255, 255, 0.1);
   cursor: pointer;
+}
+
+.camera-container {
+  position: relative;
+  margin-top: 20px;
 }
 
 .camera {
