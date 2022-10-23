@@ -3,7 +3,11 @@ import _, { chunk, clone, flatten, get, capitalize } from 'lodash'
 import Card from './Card'
 import { useDispatch, useSelector } from 'react-redux'
 import useRedux from '../redux/useRedux'
-import { updateCards, updateDrafts } from '../redux/mainActions'
+import {
+  updateCards,
+  updateDrafts,
+  updateScrapboards,
+} from '../redux/mainActions'
 import { useNavigate, useParams } from 'react-router-dom'
 
 const Deck = () => {
@@ -14,7 +18,7 @@ const Deck = () => {
   const [movingCam, setMovingCam] = useState(false)
   const dispatch = useDispatch()
   // const [cards, setCards] = useState([])
-  const { cards, drafts } = useRedux()
+  const { cards, drafts, scrapboards } = useRedux()
   const [currentMovingIndex, setCurrentMovingIndex] = useState(-1)
   const [currentlySelectedIndex, setCurrentlySelectedIndex] = useState(-1)
 
@@ -220,6 +224,29 @@ const Deck = () => {
               dispatch(updateDrafts(_drafts))
               di = _drafts.length - 1
               navigate('/text-editor/' + di)
+            }
+          }
+        } else if (e.key === 'k') {
+          let c = window.confirm('Do you want to work on a scrapboard here?')
+          if (c) {
+            // create new draft in redux and then navigate to it
+            let _scrapboards = [...scrapboards]
+            let r = route
+              .split('-')
+              .map((x) => x.split('_')[0])
+              .join('-')
+            let di = _scrapboards.findIndex((x) => x.route === (route ? r : ''))
+            if (di > -1) {
+              navigate('/scrap-board/' + di)
+            } else {
+              _scrapboards.push({
+                route: route ? r : '',
+                index: scrapboards.length,
+                items: [],
+              })
+              dispatch(updateScrapboards(_scrapboards))
+              di = _scrapboards.length - 1
+              navigate('/scrap-board/' + di)
             }
           }
         }
