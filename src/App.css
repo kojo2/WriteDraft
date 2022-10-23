@@ -120,3 +120,10 @@
 .no-highlight {
   user-select: none;
 }
+
+.text-editor-container {
+  width: 80vw;
+  padding: 20px;
+  height: 80vh;
+  overflow: scroll;
+}

@@ -3,7 +3,7 @@ import _, { chunk, clone, flatten, get, capitalize } from 'lodash'
 import Card from './Card'
 import { useDispatch, useSelector } from 'react-redux'
 import useRedux from '../redux/useRedux'
-import { updateCards } from '../redux/mainActions'
+import { updateCards, updateDrafts } from '../redux/mainActions'
 import { useNavigate, useParams } from 'react-router-dom'
 
 const Deck = () => {
@@ -14,7 +14,7 @@ const Deck = () => {
   const [movingCam, setMovingCam] = useState(false)
   const dispatch = useDispatch()
   // const [cards, setCards] = useState([])
-  const { cards } = useRedux()
+  const { cards, drafts } = useRedux()
   const [currentMovingIndex, setCurrentMovingIndex] = useState(-1)
   const [currentlySelectedIndex, setCurrentlySelectedIndex] = useState(-1)
 
@@ -101,6 +101,17 @@ const Deck = () => {
 
   const levelCards = getLevelCards(cards)
 
+  const getTitle = () => {
+    if (route) {
+      let r = route.split('-')
+      let i = r.pop()
+      let lc = getLevelCards(cards, r.join('-'))
+      return lc.find((x) => x.index === parseInt(i.split('_')[0]))?.text
+    } else {
+      return ''
+    }
+  }
+
   return (
     <div
       className="deck"
@@ -165,7 +176,9 @@ const Deck = () => {
         } else if (e.key === 'e') {
           let c = window.confirm('Do you want to export this to a text file')
           if (c) {
-            document.write('<pre>' + JSON.stringify(cards, null, 2) + '</pre>')
+            document.write(
+              '<pre>' + JSON.stringify({ cards, drafts }, null, 2) + '</pre>',
+            )
           }
         } else if (e.key === 'l') {
           let p = window.prompt('Load cards')
@@ -174,7 +187,8 @@ const Deck = () => {
           } else {
             try {
               let o = JSON.parse(p)
-              dispatch(updateCards(o))
+              dispatch(updateCards(o.cards))
+              dispatch(updateDrafts(o.drafts))
             } catch (err) {
               alert("Couldn't load this file: " + err)
             }
@@ -182,6 +196,32 @@ const Deck = () => {
         } else if (e.key === 'Escape') {
           setCurrentlySelectedIndex(-1)
           setCurrentMovingIndex(-1)
+        } else if (e.key === 'd') {
+          if (levelCards.length) {
+            return
+          }
+          let c = window.confirm('Do you want to work on a draft here?')
+          if (c) {
+            // create new draft in redux and then navigate to it
+            let _drafts = [...drafts]
+            let r = route
+              .split('-')
+              .map((x) => x.split('_')[0])
+              .join('-')
+            let di = _drafts.findIndex((x) => x.route === (route ? r : ''))
+            if (di > -1) {
+              navigate('/text-editor/' + di)
+            } else {
+              _drafts.push({
+                route: route ? r : '',
+                index: drafts.length,
+                text: 'Write about how ' + getTitle(),
+              })
+              dispatch(updateDrafts(_drafts))
+              di = _drafts.length - 1
+              navigate('/text-editor/' + di)
+            }
+          }
         }
       }}
       onMouseMove={(e) => {
@@ -209,16 +249,7 @@ const Deck = () => {
           }}
         ></div>
       </div>
-      <div className="title-bar">
-        {route
-          ? (() => {
-              let r = route.split('-')
-              let i = r.pop()
-              let lc = getLevelCards(cards, r.join('-'))
-              return lc.find((x) => x.index === parseInt(i.split('_')[0]))?.text
-            })()
-          : ''}
-      </div>
+      <div className="title-bar">{getTitle()}</div>
       <div className="camera-container">
         <div className="camera" style={{ top: camPos.y, left: camPos.x }}>
           {levelCards.map((card) => (
