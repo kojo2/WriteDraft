@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import _, { chunk, clone, flatten, get, capitalize } from 'lodash'
 import Card from './Card'
 import { useDispatch, useSelector } from 'react-redux'
@@ -9,6 +9,7 @@ import {
   updateScrapboards,
 } from '../redux/mainActions'
 import { useNavigate, useParams } from 'react-router-dom'
+import { getLevelCards } from '../utils/functions'
 
 const Deck = () => {
   const [camPos, setCamPos] = useState({ x: 0, y: 0 })
@@ -22,22 +23,13 @@ const Deck = () => {
   const [currentMovingIndex, setCurrentMovingIndex] = useState(-1)
   const [currentlySelectedIndex, setCurrentlySelectedIndex] = useState(-1)
 
-  const getLevelCards = (_cards, f = route) => {
-    if (f) {
-      let r = f.split('-').filter((x) => x)
-      let p = { c: _cards }
-      r.forEach((index) => {
-        let i = parseInt(index)
-        p = { c: p.c.find((x) => x.index === i)?.children || [] }
-      })
-      return p.c
-    }
-    return _cards
-  }
+  useEffect(() => {
+    sortCards()
+  }, [])
 
   const sortCards = () => {
     let _cards = [...cards]
-    let levelCards = getLevelCards(_cards)
+    let levelCards = getLevelCards(_cards, route)
     let row = 0
     let col = 0
     let top = 50
@@ -70,7 +62,7 @@ const Deck = () => {
     // add up all the cards that have word counts already
     let usedWords = 0
     let unwordcountedcardscount = 0
-    let levelCards = getLevelCards(cards)
+    let levelCards = getLevelCards(cards, route)
     levelCards.forEach((card) => {
       if (card.words) {
         usedWords += parseInt(card.words)
@@ -89,13 +81,14 @@ const Deck = () => {
     let v = capitalize(prompt('Text'))
     if (!v.length) return
     let _cards = [...cards]
-    let _levelCards = getLevelCards(_cards)
+    let _levelCards = getLevelCards(_cards, route)
     _levelCards.push({
       text: v,
       x: 20,
       y: 50,
       children: [],
       index: _levelCards.length,
+      route: route + '-' + _levelCards.length,
     })
     setCurrentlySelectedIndex(_levelCards.length - 1)
     dispatch(updateCards(_cards))
@@ -103,7 +96,7 @@ const Deck = () => {
 
   const averageWordCount = calculateAverageWordCount()
 
-  const levelCards = getLevelCards(cards)
+  const levelCards = getLevelCards(cards, route)
 
   const getTitle = () => {
     if (route) {
@@ -141,7 +134,7 @@ const Deck = () => {
             let c = window.confirm('Do you want to delete the selected card?')
             if (c) {
               let _cards = [...cards]
-              let levelCards = getLevelCards(_cards)
+              let levelCards = getLevelCards(_cards, route)
               let index = levelCards.findIndex(
                 (x) => x.index === currentlySelectedIndex,
               )
@@ -201,9 +194,6 @@ const Deck = () => {
           setCurrentlySelectedIndex(-1)
           setCurrentMovingIndex(-1)
         } else if (e.key === 'd') {
-          if (levelCards.length) {
-            return
-          }
           let c = window.confirm('Do you want to work on a draft here?')
           if (c) {
             // create new draft in redux and then navigate to it
@@ -219,7 +209,8 @@ const Deck = () => {
               _drafts.push({
                 route: route ? r : '',
                 index: drafts.length,
-                text: 'Write about how ' + getTitle(),
+                text: getTitle(),
+                averageWordCount,
               })
               dispatch(updateDrafts(_drafts))
               di = _drafts.length - 1
@@ -255,7 +246,7 @@ const Deck = () => {
         e.stopPropagation()
         if (currentMovingIndex > -1) {
           let _cards = clone(cards)
-          let levelCards = getLevelCards(_cards)
+          let levelCards = getLevelCards(_cards, route)
           let lc = levelCards.find((x) => x.index === currentMovingIndex)
           lc.x = e.clientX - 150 - camPos.x
           lc.y = e.clientY - 100 - camPos.y
@@ -284,7 +275,7 @@ const Deck = () => {
               words={card.words ? card.words : averageWordCount}
               removeWordCount={() => {
                 let _cards = [...cards]
-                let _levelCards = getLevelCards(_cards)
+                let _levelCards = getLevelCards(_cards, route)
                 delete _levelCards.find((x) => x.index === card.index).words
                 dispatch(updateCards(_cards))
                 setCurrentMovingIndex(-1)
@@ -292,7 +283,7 @@ const Deck = () => {
               }}
               setWordCount={(wordcount) => {
                 let _cards = [...cards]
-                let _levelCards = getLevelCards(_cards)
+                let _levelCards = getLevelCards(_cards, route)
                 _levelCards.find(
                   (x) => x.index === card.index,
                 ).words = wordcount

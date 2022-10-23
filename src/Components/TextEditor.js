@@ -12,12 +12,13 @@ import useInterval from 'use-interval'
 import { useDispatch } from 'react-redux'
 import { updateDrafts } from '../redux/mainActions'
 import useRedux from '../redux/useRedux'
+import { getLevelCards } from '../utils/functions'
 
 const TextEditor = () => {
   const { draftId } = useParams()
   const navigate = useNavigate()
   const dispatch = useDispatch()
-  const { drafts } = useRedux()
+  const { drafts, cards: allCards } = useRedux()
   const [justSaved, setJustSaved] = useState(false)
   const [editorState, setEditorState] = React.useState(() => {
     let d = drafts.find((x) => x.index === parseInt(draftId))
@@ -39,6 +40,21 @@ const TextEditor = () => {
       setJustSaved(false)
     }, 1000)
   }
+
+  const draft = drafts.find((x) => x.index === parseInt(draftId)) || {
+    cards: [],
+  }
+
+  const getCardDetails = (cards) =>
+    cards.map((c) => {
+      if (!c.words) {
+        c.words = draft.averageWordCount
+      }
+      delete c.children
+      delete c.x
+      delete c.y
+      return { ...c }
+    })
 
   useInterval(() => {
     saveChanges()
@@ -62,6 +78,13 @@ const TextEditor = () => {
         onChange={setEditorState}
         placeholder="some text..."
       />
+      <ul className="text-editor-card-summaries">
+        {getCardDetails(getLevelCards(allCards, draft.route)).map((c) => (
+          <li>
+            {c.text} ({c.words} words)
+          </li>
+        ))}
+      </ul>
     </div>
   )
 }
