@@ -25,10 +25,20 @@ const AppWrapper = () => {
 
   useInterval(() => {
     localStorage.setItem('stuff', JSON.stringify({ cards, drafts }))
-  }, [120000])
+  }, [30000])
 
   return (
-    <div className="App-container">
+    <div
+      className="App-container"
+      onKeyDown={(e) => {
+        if (e.key === 's') {
+          if (e.ctrlKey) {
+            localStorage.setItem('stuff', JSON.stringify({ cards, drafts }))
+            alert('Saved')
+          }
+        }
+      }}
+    >
       <Routes>
         <Route path="/text-editor/:draftId" element={<TextEditor />} />
         <Route path="/scrap-board/:boardId" element={<ScrapBoard />} />

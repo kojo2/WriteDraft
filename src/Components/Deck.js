@@ -22,6 +22,8 @@ const Deck = () => {
   const { cards, drafts, scrapboards } = useRedux()
   const [currentMovingIndex, setCurrentMovingIndex] = useState(-1)
   const [currentlySelectedIndex, setCurrentlySelectedIndex] = useState(-1)
+  const [reorderMode, setReorderMode] = useState(false)
+  const [reorderA, setReorderA] = useState([])
 
   useEffect(() => {
     sortCards()
@@ -128,7 +130,26 @@ const Deck = () => {
       }}
       onKeyDown={(e) => {
         if (e.key === 'n' || e.key === 'Enter') {
-          createCard()
+          if (reorderMode) {
+            // put the cards in the new order by changing their indexes and resort
+            let _cards = [...cards]
+            let levelCards = getLevelCards(_cards, route)
+            let ra = [...reorderA]
+            ra = ra.map((r, i) => {
+              r.index = i
+              return r
+            })
+            let nCards = [...ra]
+            nCards.forEach((n, i) => {
+              levelCards[i] = { ...n }
+            })
+            nCards.sort((a, b) => a.index - b.index)
+            dispatch(updateCards(_cards))
+            setReorderMode(false)
+            setReorderA([])
+          } else {
+            createCard()
+          }
         } else if (e.key === 'Backspace') {
           if (currentlySelectedIndex > -1) {
             let c = window.confirm('Do you want to delete the selected card?')
@@ -240,6 +261,36 @@ const Deck = () => {
               navigate('/scrap-board/' + di)
             }
           }
+        } else if (e.key === 'f') {
+          let c = window.confirm(
+            'Do you want to reset the order of these cards?',
+          )
+          if (c) {
+            setReorderMode(true)
+          }
+        } else if (e.key === 'a') {
+          let c = window.confirm('Do you want to amend the text in this card?')
+          if (c) {
+            let _cards = [...cards]
+            let _levelCards = getLevelCards(_cards, route)
+            let card = _levelCards.find(
+              (x) => x.index === currentlySelectedIndex,
+            )
+            if (card) {
+              let t = window.prompt('New text', card.text)
+              if (t) {
+                card.text = t
+                dispatch(updateCards(_cards))
+              }
+            }
+          }
+        } else if (e.key === 'c') {
+          if (currentlySelectedIndex > -1) {
+            let card = getLevelCards(cards, route).find(
+              (x) => x.index === currentlySelectedIndex,
+            )
+            navigator.clipboard.writeText(card.text)
+          }
         }
       }}
       onMouseMove={(e) => {
@@ -259,20 +310,28 @@ const Deck = () => {
         }
       }}
     >
-      <div className="buttons">
+      {/* <div className="buttons">
         <div
           className="rearrange-button"
           onClick={() => {
             sortCards()
           }}
         ></div>
-      </div>
+      </div> */}
       <div className="title-bar">{getTitle()}</div>
       <div className="camera-container">
         <div className="camera" style={{ top: camPos.y, left: camPos.x }}>
           {levelCards.map((card) => (
             <Card
               words={card.words ? card.words : averageWordCount}
+              reorderMode={reorderMode}
+              reorderIndex={(() => {
+                if (reorderMode) {
+                  return reorderA.findIndex((x) => x.index === card.index)
+                } else {
+                  return -1
+                }
+              })()}
               removeWordCount={() => {
                 let _cards = [...cards]
                 let _levelCards = getLevelCards(_cards, route)
@@ -291,11 +350,17 @@ const Deck = () => {
               }}
               selected={currentlySelectedIndex === card.index}
               pos={{ x: card.x, y: card.y }}
-              text={card.text}
+              text={`${card.text}`}
               onMouseDown={(e) => {
                 e.stopPropagation()
-                setCurrentlySelectedIndex(card.index)
-                setCurrentMovingIndex(card.index)
+                if (reorderMode) {
+                  let rA = [...reorderA]
+                  rA.push(card)
+                  setReorderA(rA)
+                } else {
+                  setCurrentlySelectedIndex(card.index)
+                  setCurrentMovingIndex(card.index)
+                }
               }}
               onMouseUp={(e) => {
                 setCurrentMovingIndex(-1)

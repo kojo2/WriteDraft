@@ -100,6 +100,18 @@
   flex-direction: column;
   pointer-events: all;
   justify-content: center;
+  align-items: center;
+}
+
+.card.reorder-mode {
+  border: solid 2px #00f570;
+  box-sizing: border-box;
+  box-shadow: 0px 0px 30px #00f570;
+}
+
+.card-text {
+  user-select: none;
+  max-width: 300px;
 }
 
 .word-count {
@@ -115,10 +127,6 @@
   border: solid 2px #00b5f0;
   box-sizing: border-box;
   box-shadow: 0px 0px 30px #00b5f0;
-}
-
-.no-highlight {
-  user-select: none;
 }
 
 .text-editor-container {

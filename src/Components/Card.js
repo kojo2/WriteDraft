@@ -9,16 +9,23 @@ const Card = ({
   selected,
   words,
   setWordCount,
+  reorderMode,
+  reorderIndex,
   removeWordCount,
 }) => {
   return (
     <div
-      className={`card ${selected ? 'selected' : ''}`}
+      className={`card ${selected ? 'selected' : ''} ${
+        reorderMode ? 'reorder-mode' : ''
+      }`}
       style={{ top: pos.y, left: pos.x }}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
       onMouseUp={onMouseUp}
     >
+      <span className="reorder-index">
+        {reorderIndex > -1 ? reorderIndex : null}
+      </span>
       <span
         className="word-count"
         onClick={(e) => {
@@ -44,7 +51,7 @@ const Card = ({
       >
         {words} words
       </span>
-      <span className="no-highlight">{text}</span>
+      <span className="no-highlight card-text">{text}</span>
     </div>
   )
 }
