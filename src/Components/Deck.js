@@ -122,12 +122,12 @@ const Deck = () => {
         }
         setCurrentlySelectedIndex(-1)
       }}
-      onContextMenu={(e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        setCurrentMovingIndex(-1)
-        setMovingCam(true)
-      }}
+      // onContextMenu={(e) => {
+      //   e.preventDefault()
+      //   e.stopPropagation()
+      //   setCurrentMovingIndex(-1)
+      //   setMovingCam(true)
+      // }}
       onKeyDown={(e) => {
         if (e.key === 'n' || e.key === 'Enter') {
           if (reorderMode) {
@@ -249,10 +249,11 @@ const Deck = () => {
               .join('-')
             let di = _scrapboards.findIndex((x) => x.route === (route ? r : ''))
             if (di > -1) {
-              navigate('/scrap-board/' + di)
+              navigate('/scrap-board/' + _scrapboards[di].index)
             } else {
               _scrapboards.push({
                 route: route ? r : '',
+                title: getTitle(),
                 index: scrapboards.length,
                 items: [],
               })

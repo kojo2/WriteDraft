@@ -5,11 +5,15 @@ import useInterval from 'use-interval'
 import Deck from './Components/Deck'
 import ScrapBoard from './Components/Scrapboard/Scrapboard'
 import TextEditor from './Components/TextEditor'
-import { updateCards, updateDrafts } from './redux/mainActions'
+import {
+  updateCards,
+  updateDrafts,
+  updateScrapboards,
+} from './redux/mainActions'
 import useRedux from './redux/useRedux'
 
 const AppWrapper = () => {
-  const { cards, drafts } = useRedux()
+  const { cards, drafts, scrapboards } = useRedux()
   const dispatch = useDispatch()
 
   useEffect(() => {
@@ -18,13 +22,17 @@ const AppWrapper = () => {
       let o = JSON.parse(s)
       dispatch(updateCards(o.cards))
       dispatch(updateDrafts(o.drafts))
+      dispatch(updateScrapboards(o.scrapboards))
     } catch (err) {
       console.log("couldn't load the stuff")
     }
   }, [])
 
   useInterval(() => {
-    localStorage.setItem('stuff', JSON.stringify({ cards, drafts }))
+    localStorage.setItem(
+      'stuff',
+      JSON.stringify({ cards, drafts, scrapboards }),
+    )
   }, [30000])
 
   return (
@@ -33,7 +41,10 @@ const AppWrapper = () => {
       onKeyDown={(e) => {
         if (e.key === 's') {
           if (e.ctrlKey) {
-            localStorage.setItem('stuff', JSON.stringify({ cards, drafts }))
+            localStorage.setItem(
+              'stuff',
+              JSON.stringify({ cards, drafts, scrapboards }),
+            )
             alert('Saved')
           }
         }

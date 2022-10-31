@@ -11,7 +11,7 @@ const ScrapBoard = () => {
   const { boardId } = useParams()
   const navigate = useNavigate()
   const dispatch = useDispatch()
-  const { scrapboards } = useRedux()
+  const { scrapboards, cards, drafts } = useRedux()
   const [justSaved, setJustSaved] = useState(false)
   const [items, setItems] = useState([])
   const [activeItemIndex, setActiveItemIndex] = useState(-1)
@@ -19,13 +19,21 @@ const ScrapBoard = () => {
   const [movingCam, setMovingCam] = useState(false)
   const [currentMovingIndex, setCurrentMovingIndex] = useState(-1)
   const [currentlySelectedIndex, setCurrentlySelectedIndex] = useState(-1)
+  const [resizingImage, setResizingImage] = useState(false)
 
   const saveChanges = () => {
     let _scrapboards = [...scrapboards]
     // _scrapboards.find(
     //   (x) => x.index === parseInt(boardId),
     // ).text = editorState.getCurrentContent().getPlainText()
+    let s = _scrapboards.find((x) => x.index === parseInt(boardId))
+    s.items = [...items]
     dispatch(updateScrapboards([..._scrapboards]))
+    localStorage.setItem(
+      'stuff',
+      JSON.stringify({ cards, drafts, _scrapboards }),
+    )
+    alert('Saved')
     setJustSaved(true)
     setTimeout(() => {
       setJustSaved(false)
@@ -37,15 +45,11 @@ const ScrapBoard = () => {
     if (s) {
       setItems(s.items)
     }
-  }, [])
+  }, [scrapboards])
 
   const sortItems = () => {}
 
-  useInterval(() => {
-    saveChanges()
-  }, [60000])
-
-  const scrapboard = scrapboards.find((x) => x.index === boardId)
+  const scrapboard = scrapboards.find((x) => x.index === parseInt(boardId))
 
   return (
     <div
@@ -54,14 +58,51 @@ const ScrapBoard = () => {
         if (e.ctrlKey && e.key === 's') {
           saveChanges()
         } else if (e.key === 'Escape') {
-          navigate(-1)
+          if (resizingImage) {
+            setResizingImage(false)
+          } else if (currentMovingIndex > -1) {
+            setCurrentMovingIndex(-1)
+          } else {
+            navigate(-1)
+          }
         } else if (e.key === 't') {
           let c = window.confirm('Do you want to create a text box?')
           if (c) {
-            let index = items.length
-            setItems([...items, { type: 'textbox', x: 100, y: 100, index }])
-            setActiveItemIndex(index)
+            let t = window.prompt('Textbox text')
+            if (t) {
+              let index = items.length
+              setItems([
+                ...items,
+                { type: 'textbox', x: 100, y: 100, index, text: t, size: 1 },
+              ])
+              setActiveItemIndex(index)
+            }
           }
+        } else if (e.key === 'i') {
+          let c = window.confirm('Do you want to add an image?')
+          if (c) {
+            let t = window.prompt('Image url')
+            if (t) {
+              let index = items.length
+              setItems([
+                ...items,
+                { type: 'image', x: 100, y: 100, index, text: t, size: 0.5 },
+              ])
+              setActiveItemIndex(index)
+            }
+          }
+        } else if (e.key === 'Backspace') {
+          let c = window.confirm('Do you want to delete this item?')
+          if (c) {
+            let _items = [...items]
+            _items.splice(
+              _items.findIndex((x) => x.index === currentlySelectedIndex),
+              1,
+            )
+            setItems(_items)
+          }
+        } else if (e.key === 's') {
+          setResizingImage(true)
         }
       }}
       tabIndex={0}
@@ -70,14 +111,15 @@ const ScrapBoard = () => {
         if (movingCam) {
           setMovingCam(false)
         }
+        setResizingImage(false)
         setCurrentlySelectedIndex(-1)
       }}
-      onContextMenu={(e) => {
-        e.preventDefault()
-        e.stopPropagation()
-        setCurrentMovingIndex(-1)
-        setMovingCam(true)
-      }}
+      // onContextMenu={(e) => {
+      //   e.preventDefault()
+      //   e.stopPropagation()
+      //   setCurrentMovingIndex(-1)
+      //   setMovingCam(true)
+      // }}
       onMouseMove={(e) => {
         e.stopPropagation()
         if (currentMovingIndex > -1) {
@@ -91,6 +133,11 @@ const ScrapBoard = () => {
           _camPos.x += e.movementX
           _camPos.y += e.movementY
           setCamPos(_camPos)
+        } else if (resizingImage) {
+          let _items = [...items]
+          let i = _items.find((x) => x.index === currentlySelectedIndex)
+          i.size += e.movementX / 100
+          setItems(_items)
         }
       }}
     >
@@ -103,30 +150,34 @@ const ScrapBoard = () => {
         ></div>
       </div> */}
       {justSaved ? <span className="word-count">Saved</span> : null}
-      {/* <div className="title-bar">{getTitle()}</div> */}
+      <div className="title-bar">{scrapboard?.title}</div>
       <div className="camera-container">
         <div className="camera" style={{ top: camPos.y, left: camPos.x }}>
-          {items.map((item) => (
-            <Item
-              type={item.type}
-              removeWordCount
-              selected={currentlySelectedIndex === item.index}
-              pos={{ x: item.x, y: item.y }}
-              text={item.text}
-              onMouseDown={(e) => {
-                e.stopPropagation()
-                if (currentMovingIndex === item.index) {
+          <div style={{ display: 'flex' }}>
+            {items.map((item) => (
+              <Item
+                size={item.size}
+                type={item.type}
+                removeWordCount
+                selected={currentlySelectedIndex === item.index}
+                pos={{ x: item.x, y: item.y }}
+                text={item.text}
+                onMouseDown={(e) => {
+                  e.stopPropagation()
+                  e.preventDefault()
+                  if (currentMovingIndex === item.index) {
+                    setCurrentMovingIndex(-1)
+                  } else {
+                    setCurrentlySelectedIndex(item.index)
+                    setCurrentMovingIndex(item.index)
+                  }
+                }}
+                onMouseUp={(e) => {
                   setCurrentMovingIndex(-1)
-                } else {
-                  setCurrentlySelectedIndex(item.index)
-                  setCurrentMovingIndex(item.index)
-                }
-              }}
-              onMouseUp={(e) => {
-                setCurrentMovingIndex(-1)
-              }}
-            />
-          ))}
+                }}
+              />
+            ))}
+          </div>
         </div>
       </div>
     </div>

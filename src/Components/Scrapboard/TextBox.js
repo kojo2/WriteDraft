@@ -1,10 +1,10 @@
-const TextBox = ({ selected }) => {
+const TextBox = ({ selected, text }) => {
   return (
     <div
-      style={{ width: '200px', color: 'white' }}
+      style={{ display: 'block', color: 'white' }}
       className={selected ? 'selected' : ''}
     >
-      Text
+      {text}
     </div>
   )
 }
