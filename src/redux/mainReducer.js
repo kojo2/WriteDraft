@@ -4,6 +4,8 @@ const initialState = {
   cards: [],
   drafts: [],
   scrapboards: [],
+  units: { units: 'word', fractions: false },
+  globalTargetCount: 50000,
 }
 
 export function mainReducer(state = R.clone(initialState), action) {
@@ -13,6 +15,18 @@ export function mainReducer(state = R.clone(initialState), action) {
       return state
     case 'UPDATE_DRAFTS':
       state = { ...state, drafts: action.payload }
+      return state
+    case 'UPDATE_GLOBAL_TARGET_COUNT':
+      state = { ...state, globalTargetCount: action.payload }
+      return state
+    case 'UPDATE_UNITS':
+      state = {
+        ...state,
+        units: {
+          units: action.payload.units,
+          fractions: action.payload.fractions,
+        },
+      }
       return state
     case 'UPDATE_SCRAPBOARD':
       let index = action.payload.index

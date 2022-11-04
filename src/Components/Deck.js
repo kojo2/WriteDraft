@@ -6,7 +6,9 @@ import useRedux from '../redux/useRedux'
 import {
   updateCards,
   updateDrafts,
+  updateGlobalTargetCount,
   updateScrapboards,
+  updateUnits,
 } from '../redux/mainActions'
 import { useNavigate, useParams } from 'react-router-dom'
 import { getLevelCards } from '../utils/functions'
@@ -19,10 +21,12 @@ const Deck = () => {
   const [movingCam, setMovingCam] = useState(false)
   const dispatch = useDispatch()
   // const [cards, setCards] = useState([])
-  const { cards, drafts, scrapboards } = useRedux()
+  const { cards, drafts, scrapboards, units, globalTargetCount } = useRedux()
   const [currentMovingIndex, setCurrentMovingIndex] = useState(-1)
   const [currentlySelectedIndex, setCurrentlySelectedIndex] = useState(-1)
   const [reorderMode, setReorderMode] = useState(false)
+  const [mathsMode, setMathsMode] = useState(false)
+  const [mathsA, setMathsA] = useState([])
   const [reorderA, setReorderA] = useState([])
 
   useEffect(() => {
@@ -60,7 +64,9 @@ const Deck = () => {
   }
 
   const calculateAverageWordCount = () => {
-    let totalWordCount = route ? parseInt(route.split('_').pop()) : 100000
+    let totalWordCount = route
+      ? parseInt(route.split('_').pop())
+      : globalTargetCount
     // add up all the cards that have word counts already
     let usedWords = 0
     let unwordcountedcardscount = 0
@@ -74,7 +80,10 @@ const Deck = () => {
     })
 
     // divide the remainder by the remainder of cards that dont have words counts
-    let wc = Math.round((totalWordCount - usedWords) / unwordcountedcardscount)
+    let g = (totalWordCount - usedWords) / unwordcountedcardscount
+    let wc = units.fractions
+      ? Math.round((g + Number.EPSILON) * 100) / 100
+      : Math.round(g)
 
     return wc
   }
@@ -96,6 +105,64 @@ const Deck = () => {
     dispatch(updateCards(_cards))
   }
 
+  const deleteAll = () => {
+    let c = window.confirm('Do you want to delete everything?')
+    if (c) {
+      c = window.confirm(
+        'Are you sure you want to delete everything? This action cannot be undone',
+      )
+      if (c) {
+        dispatch(updateCards([]))
+        dispatch(updateDrafts([]))
+        dispatch(updateScrapboards([]))
+        alert('Deleted')
+      }
+    }
+  }
+
+  const changeUnits = () => {
+    let c = window.confirm(
+      'Do you want to change the units from words to something else?',
+    )
+    if (c) {
+      let p = window.prompt('New word (singular):')
+      let f = window.confirm('Do these units allow fractions or not?')
+      if (p.length) {
+        let c = window.confirm(
+          'Do you want to change the units from words to ' + p + ' ?',
+        )
+        if (c) {
+          dispatch(updateUnits({ units: p, fractions: f }))
+        }
+      }
+    }
+  }
+
+  const changeUnitCount = () => {
+    let c = window.confirm(
+      'Do you want to change the global ' +
+        units.units +
+        ' count you are aiming for?',
+    )
+    if (c) {
+      let p = window.prompt('New count:')
+      if (p.length) {
+        let c = window.confirm(
+          'Do you want to change the global ' +
+            units.units +
+            ' count from ' +
+            globalTargetCount +
+            ' to ' +
+            parseInt(p) +
+            '?',
+        )
+        if (c) {
+          dispatch(updateGlobalTargetCount(p))
+        }
+      }
+    }
+  }
+
   const averageWordCount = calculateAverageWordCount()
 
   const levelCards = getLevelCards(cards, route)
@@ -109,6 +176,13 @@ const Deck = () => {
     } else {
       return ''
     }
+  }
+
+  const rPerformOnAllCards = (_cards) => {
+    _cards.forEach((x) => {
+      delete x.words
+      rPerformOnAllCards(x.children)
+    })
   }
 
   return (
@@ -165,6 +239,12 @@ const Deck = () => {
           }
         } else if (e.key === 's') {
           sortCards()
+        } else if (e.key === 'u') {
+          changeUnits()
+        } else if (e.key === 'g') {
+          changeUnitCount()
+        } else if (e.key === 'c') {
+          deleteAll()
         } else if (e.key === ' ') {
           if (currentlySelectedIndex > -1) {
             let lc = levelCards.find((x) => x.index === currentlySelectedIndex)
@@ -195,7 +275,13 @@ const Deck = () => {
           let c = window.confirm('Do you want to export this to a text file')
           if (c) {
             document.write(
-              '<pre>' + JSON.stringify({ cards, drafts }, null, 2) + '</pre>',
+              '<pre>' +
+                JSON.stringify(
+                  { cards, drafts, scrapboards, units, globalTargetCount },
+                  null,
+                  2,
+                ) +
+                '</pre>',
             )
           }
         } else if (e.key === 'l') {
@@ -205,8 +291,21 @@ const Deck = () => {
           } else {
             try {
               let o = JSON.parse(p)
-              dispatch(updateCards(o.cards))
-              dispatch(updateDrafts(o.drafts))
+              if (o.cards) {
+                dispatch(updateCards(o.cards))
+              }
+              if (o.drafts) {
+                dispatch(updateDrafts(o.drafts))
+              }
+              if (o.scrapboards) {
+                dispatch(updateScrapboards(o.scrapboards))
+              }
+              if (o.globalTargetCount) {
+                dispatch(updateGlobalTargetCount(o.globalTargetCount))
+              }
+              if (o.units) {
+                dispatch(updateUnits(o.units))
+              }
             } catch (err) {
               alert("Couldn't load this file: " + err)
             }
@@ -292,6 +391,37 @@ const Deck = () => {
             )
             navigator.clipboard.writeText(card.text)
           }
+        } else if (e.key === 'm') {
+          if (mathsMode) {
+            alert(
+              `${mathsA
+                .map((x) => (x.words ? x.words : averageWordCount))
+                .reduce((p, c) => c + p)} words`,
+            )
+            setMathsA([])
+            setMathsMode(false)
+          } else {
+            setMathsMode(true)
+          }
+        } else if (e.key === 'w') {
+          let c = window.confirm('remove all manual word counts for all cards?')
+          if (c) {
+            let _cards = [...cards]
+            rPerformOnAllCards(_cards)
+            dispatch(updateCards(_cards))
+          } else {
+            let c = window.confirm(
+              'remove all manual word counts for this level?',
+            )
+            if (c) {
+              let _cards = [...cards]
+              let _levelCards = getLevelCards(_cards, route)
+              _levelCards.forEach((x) => delete x.words)
+              dispatch(updateCards(_cards))
+            } else {
+              return
+            }
+          }
         }
       }}
       onMouseMove={(e) => {
@@ -326,6 +456,8 @@ const Deck = () => {
             <Card
               words={card.words ? card.words : averageWordCount}
               reorderMode={reorderMode}
+              mathsSelected={mathsA.indexOf(card) > -1}
+              mathsMode={mathsMode}
               reorderIndex={(() => {
                 if (reorderMode) {
                   return reorderA.findIndex((x) => x.index === card.index)
@@ -358,6 +490,10 @@ const Deck = () => {
                   let rA = [...reorderA]
                   rA.push(card)
                   setReorderA(rA)
+                } else if (mathsMode) {
+                  let mA = [...mathsA]
+                  mA.push(card)
+                  setMathsA(mA)
                 } else {
                   setCurrentlySelectedIndex(card.index)
                   setCurrentMovingIndex(card.index)

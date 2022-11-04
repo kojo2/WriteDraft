@@ -20,9 +20,15 @@ const AppWrapper = () => {
     try {
       let s = localStorage.getItem('stuff')
       let o = JSON.parse(s)
-      dispatch(updateCards(o.cards))
-      dispatch(updateDrafts(o.drafts))
-      dispatch(updateScrapboards(o.scrapboards))
+      if (o.cards) {
+        dispatch(updateCards(o.cards))
+      }
+      if (o.drafts) {
+        dispatch(updateDrafts(o.drafts))
+      }
+      if (o.scrapboards) {
+        dispatch(updateScrapboards(o.scrapboards))
+      }
     } catch (err) {
       console.log("couldn't load the stuff")
     }

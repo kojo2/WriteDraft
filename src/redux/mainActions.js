@@ -13,3 +13,13 @@ export const updateScrapboard = (index, data) => ({
   type: 'UPDATE_SCRAPBOARD',
   payload: { data, index },
 })
+
+export const updateUnits = (data) => ({
+  type: 'UPDATE_UNITS',
+  payload: data,
+})
+
+export const updateGlobalTargetCount = (data) => ({
+  type: 'UPDATE_GLOBAL_TARGET_COUNT',
+  payload: data,
+})

@@ -109,6 +109,12 @@
   box-shadow: 0px 0px 30px #00f570;
 }
 
+.card.maths-selected {
+  border: solid 2px #9c00f5;
+  box-sizing: border-box;
+  box-shadow: 0px 0px 30px #9c00f5;
+}
+
 .card-text {
   user-select: none;
   max-width: 300px;

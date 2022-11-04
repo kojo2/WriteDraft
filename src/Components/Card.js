@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import useRedux from '../redux/useRedux'
 
 const Card = ({
   pos,
@@ -10,14 +11,17 @@ const Card = ({
   words,
   setWordCount,
   reorderMode,
+  mathsMode,
+  mathsSelected,
   reorderIndex,
   removeWordCount,
 }) => {
+  const { units } = useRedux()
   return (
     <div
       className={`card ${selected ? 'selected' : ''} ${
-        reorderMode ? 'reorder-mode' : ''
-      }`}
+        reorderMode ? 'reorder-mode' : mathsMode ? 'reorder-mode' : ''
+      } ${mathsSelected ? 'maths-selected' : ''}`}
       style={{ top: pos.y, left: pos.x }}
       onMouseDown={onMouseDown}
       onMouseMove={onMouseMove}
@@ -36,9 +40,9 @@ const Card = ({
           setWordCount(c)
         }}
         onContextMenu={(e) => {
-          if (words) {
-            return
-          }
+          // if (words) {
+          //   return
+          // }
           e.preventDefault()
           e.stopPropagation()
           let c = window.confirm(
@@ -49,7 +53,7 @@ const Card = ({
           }
         }}
       >
-        {words} words
+        {words} {units.units}s
       </span>
       <span className="no-highlight card-text">{text}</span>
     </div>
