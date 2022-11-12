@@ -155,3 +155,50 @@
   position: absolute;
   pointer-events: all;
 }
+
+/* threads */
+
+.threads-container {
+  padding: 20px;
+  box-sizing: border-box;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+.threads-inner-container {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.threads-vert-line-container {
+  position: relative;
+}
+
+.threads-hline-container {
+  top: 0;
+  display: flex;
+  position: absolute;
+  justify-content: center;
+  left: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.threads-vert-line {
+  height: 80vh;
+  width: 2px;
+  background-color: white;
+}
+
+.threads-horiz-line {
+  width: 50px;
+  height: 2px;
+  background-color: white;
+}

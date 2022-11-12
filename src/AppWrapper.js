@@ -5,6 +5,7 @@ import useInterval from 'use-interval'
 import Deck from './Components/Deck'
 import ScrapBoard from './Components/Scrapboard/Scrapboard'
 import TextEditor from './Components/TextEditor'
+import Threads from './Components/Threads'
 import {
   updateCards,
   updateDrafts,
@@ -59,6 +60,7 @@ const AppWrapper = () => {
       <Routes>
         <Route path="/text-editor/:draftId" element={<TextEditor />} />
         <Route path="/scrap-board/:boardId" element={<ScrapBoard />} />
+        <Route path="/threads" element={<Threads />} />
         <Route path="/:p" element={<Deck />} />
         <Route path="/" element={<Deck />} />
       </Routes>
